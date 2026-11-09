@@ -1,6 +1,6 @@
 [project]
 name = "Folder-Diff-Tools"
-version = "1.0.1"
+version = "1.0.2"
 description = "A small set of Python 3 utility scripts for recursively comparing folders."
 readme = "README.md"
 requires-python = ">=3.0"
