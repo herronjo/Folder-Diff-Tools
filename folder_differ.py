@@ -16,6 +16,7 @@ along with this program; if not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
+import os
 from pathlib import Path
 from hashlib import file_digest
 from multiprocessing import Pool
@@ -32,6 +33,7 @@ class FileHash:
 	def __init__(self, path: Path, s256hash: str):
 		self.path = path
 		self.s256hash = s256hash
+		self.size = os.path.getsize(path)
 		self.relative = ''
 
 	def setRelative(self, dir: Path):
@@ -43,9 +45,12 @@ def hashFile(f: Path) -> FileHash:
 		return FileHash(f, digest)
 
 if __name__ == '__main__':
-	if (len(sys.argv) < 3):
-		print(f'Usage: {sys.argv[0]} <source_folder_1> <source_folder_2>')
+	if (len(sys.argv) < 4):
+		print(f'Usage: {sys.argv[0]} <source_folder_1> <source_folder_2> <output_tsv>')
 		quit()
+	fd = open(sys.argv[3], 'w', encoding='utf-8')
+	fd.write(f'Comparing {sys.argv[1]} to {sys.argv[2]}\n')
+	fd.write(f'Filename\tOriginal Size (bytes)\tOriginal Hash\tUpdated Size (bytes)\tUpdated Hash\tStatus\n')
 	dir1 = Path(sys.argv[1])
 	files1 = [f for f in dir1.rglob('*') if f.is_file()]
 
@@ -85,4 +90,8 @@ if __name__ == '__main__':
 			color = Color.END
 			modification = 'Unchanged'
 
+		# only log differences
+		if not (entry1 and entry2 and entry1.s256hash == entry2.s256hash):
+			fd.write(f'{f}\t{entry1.size if entry1 else ''}\t{entry1.s256hash if entry1 else ''}\t{entry2.size if entry2 else ''}\t{entry2.s256hash if entry2 else ''}\t{modification}\n')
 		print(f'{color}{f}: {entry1.s256hash if entry1 else 'Not present'} -> {entry2.s256hash if entry2 else 'Not present'}: {modification}{Color.END}')
+	fd.close()
