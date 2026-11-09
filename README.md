@@ -16,7 +16,7 @@ Recursively compute the hashes of every file in a folder, outputting the file pa
 
 Usage:
 ```sh
-python folder_hasher.py folder1 output.tsv
+python folder_hasher.py folder output.tsv
 ```
 
 ![Folder Hasher usage and output](./docs_resources/folder_hasher.png)
