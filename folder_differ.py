@@ -16,6 +16,7 @@ along with this program; if not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
+import os
 from pathlib import Path
 from hashlib import file_digest
 from multiprocessing import Pool
@@ -32,6 +33,7 @@ class FileHash:
 	def __init__(self, path: Path, s256hash: str):
 		self.path = path
 		self.s256hash = s256hash
+		self.size = os.path.getsize(path)
 		self.relative = ''
 
 	def setRelative(self, dir: Path):
@@ -43,46 +45,52 @@ def hashFile(f: Path) -> FileHash:
 		return FileHash(f, digest)
 
 if __name__ == '__main__':
-	if (len(sys.argv) < 3):
-		print(f'Usage: {sys.argv[0]} <source_folder_1> <source_folder_2>')
+	if (len(sys.argv) < 4):
+		print(f'Usage: {sys.argv[0]} <source_folder_1> <source_folder_2> <output_tsv>')
 		quit()
-	dir1 = Path(sys.argv[1])
-	files1 = [f for f in dir1.rglob('*') if f.is_file()]
+	with open(sys.argv[3], 'w', encoding='utf-8') as fd:
+		fd.write(f'Comparing {sys.argv[1]} to {sys.argv[2]}\n')
+		fd.write(f'Filename\tOriginal Size (bytes)\tOriginal Hash\tUpdated Size (bytes)\tUpdated Hash\tStatus\n')
+		dir1 = Path(sys.argv[1])
+		files1 = [f for f in dir1.rglob('*') if f.is_file()]
 
-	dir2 = Path(sys.argv[2])
-	files2 = [f for f in dir2.rglob('*') if f.is_file()]
+		dir2 = Path(sys.argv[2])
+		files2 = [f for f in dir2.rglob('*') if f.is_file()]
 
-	with Pool() as pool:
-		fileHashes1 = pool.map(hashFile, files1)
-		fileHashes2 = pool.map(hashFile, files2)
+		with Pool() as pool:
+			fileHashes1 = pool.map(hashFile, files1)
+			fileHashes2 = pool.map(hashFile, files2)
 
-	merged: list[str] = []
-	for f in fileHashes1:
-		f.setRelative(dir1)
-		merged.append(f.relative)
-	for f in fileHashes2:
-		f.setRelative(dir2)
-		if f.relative not in merged:
+		merged: list[str] = []
+		for f in fileHashes1:
+			f.setRelative(dir1)
 			merged.append(f.relative)
-	sorted_merged = sorted(merged, key=str.casefold)
+		for f in fileHashes2:
+			f.setRelative(dir2)
+			if f.relative not in merged:
+				merged.append(f.relative)
+		sorted_merged = sorted(merged, key=str.casefold)
 
-	for f in sorted_merged:
-		entry1 = next((obj for obj in fileHashes1 if obj.relative == f), None)
-		entry2 = next((obj for obj in fileHashes2 if obj.relative == f), None)
+		for f in sorted_merged:
+			entry1 = next((obj for obj in fileHashes1 if obj.relative == f), None)
+			entry2 = next((obj for obj in fileHashes2 if obj.relative == f), None)
 
-		color = ''
-		modification = ''
-		if entry1 == None and entry2 != None:
-			color = Color.GREEN
-			modification = 'Added'
-		if entry1 != None and entry2 == None:
-			color = Color.RED
-			modification = 'Removed'
-		if entry1 and entry2 and entry1.s256hash != entry2.s256hash:
-			color = Color.YELLOW
-			modification = 'Changed'
-		if entry1 and entry2 and entry1.s256hash == entry2.s256hash:
-			color = Color.END
-			modification = 'Unchanged'
+			color = ''
+			modification = ''
+			if entry1 == None and entry2 != None:
+				color = Color.GREEN
+				modification = 'Added'
+			if entry1 != None and entry2 == None:
+				color = Color.RED
+				modification = 'Removed'
+			if entry1 and entry2 and entry1.s256hash != entry2.s256hash:
+				color = Color.YELLOW
+				modification = 'Changed'
+			if entry1 and entry2 and entry1.s256hash == entry2.s256hash:
+				color = Color.END
+				modification = 'Unchanged'
 
-		print(f'{color}{f}: {entry1.s256hash if entry1 else 'Not present'} -> {entry2.s256hash if entry2 else 'Not present'}: {modification}{Color.END}')
+			# Only log differences
+			if not (entry1 and entry2 and entry1.s256hash == entry2.s256hash):
+				fd.write(f'{f}\t{entry1.size if entry1 else ''}\t{entry1.s256hash if entry1 else ''}\t{entry2.size if entry2 else ''}\t{entry2.s256hash if entry2 else ''}\t{modification}\n')
+			print(f'{color}{f}: {entry1.s256hash if entry1 else 'Not present'} -> {entry2.s256hash if entry2 else 'Not present'}: {modification}{Color.END}')
