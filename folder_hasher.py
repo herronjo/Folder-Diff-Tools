@@ -40,8 +40,8 @@ def hashFile(f: Path) -> FileHash:
 
 if __name__ == '__main__':
 	if (len(sys.argv) < 3):
-			print(f'Usage: {sys.argv[0]} <source_folder_1> <source_folder_2>')
-			quit()
+		print(f'Usage: {sys.argv[0]} <source_folder_1> <source_folder_2>')
+		quit()
 	dir1 = Path(sys.argv[1])
 	files1 = [f for f in dir1.rglob('*') if f.is_file()]
 
