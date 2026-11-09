@@ -2,11 +2,11 @@
 A small set of Python 3 utility scripts for recursively comparing folders.
 
 ## [Folder Differ](folder_differ.py)
-Compare two folders, outputting the hashes of every file recursively. Reports to STDOUT whether the file was added, removed, changed, or unchanged from folder 1 to folder 2.
+Compare two folders, outputting the hashes of every file recursively. Reports to STDOUT whether the file was added, removed, changed, or unchanged from folder 1 to folder 2. Outputs a TSV of differing files, with their relative paths, sizes, and hashes. 
 
 Usage:
 ```sh
-python folder_differ.py folder1 folder2
+python folder_differ.py folder1 folder2 output.tsv
 ```
 
 ![Folder Differ usage and output](./docs_resources/folder_differ.png)
