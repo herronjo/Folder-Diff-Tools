@@ -124,15 +124,20 @@ if __name__ == '__main__':
 						other_hlist_taken: list[int] = []
 						templist: list[float] = []
 						
-						print(f'DEBUG: this_hlist_matches={this_hlist_matches}')
-						print(f'DEBUG: other_hlist_matches={other_hlist_matches}')
+						#print(f'DEBUG: this_hlist_matches={this_hlist_matches}')
+						#print(f'DEBUG: other_hlist_matches={other_hlist_matches}')
 						
 						for p1 in this_hlist_matches:
 							# List order of a matches other_hlist_matches
 							a: list[float] = []
+							b: list[bool] = []
 							for p2 in other_hlist_matches:
 								a.append(0.0) # placeholder
+								b.append(False)
 							scores.append(a)
+							scores_already_calcd.append(b)
+						for p2 in this_hlist_matches:
+							templist.append(0.0)
 						
 						viable_partner_i = -1
 						this_i = this_hlist_matches.index(this_entry.relative)
@@ -166,17 +171,24 @@ if __name__ == '__main__':
 								break
 							a = a - 1
 							b = b - 1
-						if viable_partner_i == -1:
-							print(f'ERROR: Failed to match available partner for "{this_entry.relative}" ????? (Code logic bug)')
+						if viable_partner_i == -1 and len(this_hlist_matches) == len(other_hlist_matches):
+							print(f'ERROR: Failed to match available partner for "{this_entry.relative}" even though it should be able to pair up?')
 							raise Exception()
 						
-						# Found most viable partner
-						if entry2:
-							entry1 = next((obj for obj in fileHashes1 if obj.relative == other_hlist_matches[viable_partner_i]), None)
+						if viable_partner_i != -1:
+							# Found most viable partner
+							if entry2:
+								entry1 = next((obj for obj in fileHashes1 if obj.relative == other_hlist_matches[viable_partner_i]), None)
+							else:
+								entry2 = next((obj for obj in fileHashes2 if obj.relative == other_hlist_matches[viable_partner_i]), None)
+							renamed.append(entry1.relative)
+							renamed.append(entry2.relative)
 						else:
-							entry2 = next((obj for obj in fileHashes2 if obj.relative == other_hlist_matches[viable_partner_i]), None)
-						renamed.append(entry1.relative)
-						renamed.append(entry2.relative)
+							# Couldn't find a partner that wasn't already taken.
+							if entry2:
+								renamed.append(entry2.relative)
+							else:
+								renamed.append(entry1.relative)
 
 			color = ''
 			modification = ''
