@@ -39,10 +39,23 @@ def hashFile(f: Path) -> FileHash:
 		return FileHash(f, digest)
 
 if __name__ == '__main__':
-	if (len(sys.argv) < 3):
+	if (len(sys.argv) != 3):
+		print(f'Error: wrong number of arguments.')
 		print(f'Usage: {sys.argv[0]} <input_folder> <tsv_output_file>')
 		quit()
+	if Path(sys.argv[2]).is_dir():
+		print(f'Error: "{sys.argv[2]}" is a directory.')
+		quit()
+	# Test that the output file can actually be written.
+	f_test = open(sys.argv[2], 'w', encoding='utf-8')
+	f_test.close()
 	dir1 = Path(sys.argv[1])
+	if not dir1.is_dir():
+		if dir1.is_file():
+			print(f'Error: "{sys.argv[1]}" is a file, not a directory.')
+		else:
+			print(f'Error: directory "{sys.argv[1]}" does not exist.')
+		quit()
 	files1 = [f for f in dir1.rglob('*') if f.is_file()]
 
 	with Pool() as pool:
