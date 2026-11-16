@@ -159,18 +159,19 @@ if __name__ == '__main__':
 						
 						viable_partner_i = -1
 						this_i = this_hlist_matches.index(this_entry)
-						a = len(this_hlist_matches)
-						b = len(other_hlist_matches)
-						while a > 0 and b > 0:
+						this_hlist_remaining = len(this_hlist_matches)
+						other_hlist_remaining = len(other_hlist_matches)
+						while this_hlist_remaining > 0 and other_hlist_remaining > 0:
 							# Find the match which this_entry is closest to...
+							i = this_i
+							p = this_entry
 							for i2, p2 in enumerate(other_hlist_matches):
-								if scores_already_calcd[this_i][i2] == False:
-									scores[this_i][i2] = SequenceMatcher(None, this_entry.relative, p2.relative).ratio()
-									scores_already_calcd[this_i][i2] = True
+								if scores_already_calcd[i][i2] == False:
+									scores[i][i2] = SequenceMatcher(None, p.relative, p2.relative).ratio()
+									scores_already_calcd[i][i2] = True
 								elif i2 in other_hlist_taken:
-									
-									scores[this_i][i2] = 0.0
-							next_highscore_i = scores[this_i].index(max(scores[this_i]))
+									scores[i][i2] = 0.0
+							next_highscore_i = scores[i].index(max(scores[i]))
 							
 							# ... and which isn't a closer match to another entry in this_hlist_matches.
 							i2 = next_highscore_i
@@ -184,11 +185,13 @@ if __name__ == '__main__':
 									scores[i][i2] = 0.0
 								templist[i] = scores[i][i2]
 							highscore_partner_i = templist.index(max(templist))
+							
 							if (highscore_partner_i == this_i) or (templist[highscore_partner_i] == scores[this_i][next_highscore_i]):
 								viable_partner_i = next_highscore_i
 								break
-							a = a - 1
-							b = b - 1
+							this_hlist_remaining = this_hlist_remaining - 1
+							other_hlist_remaining = other_hlist_remaining - 1
+						
 						if viable_partner_i == -1 and len(this_hlist_matches) == len(other_hlist_matches):
 							print(f'ERROR: Failed to match available partner for "{this_entry.relative}" even though it should be able to pair up?')
 							raise Exception()
