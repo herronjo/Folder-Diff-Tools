@@ -81,7 +81,8 @@ if __name__ == '__main__':
 
 		rpaths1: list[str] = []
 		rpaths2: list[str] = []
-		rpaths_added_or_deleted: list[str] = []
+		fileHashes_deleted: list[FileHash] = []
+		fileHashes_added: list[FileHash] = []
 		merged: list[str] = []
 		for f in fileHashes1:
 			f.setRelative(dir1)
@@ -92,10 +93,11 @@ if __name__ == '__main__':
 			rpaths2.append(f.relative)
 			if f.relative not in merged:
 				merged.append(f.relative)
-				rpaths_added_or_deleted.append(f.relative)
+				fileHashes_added.append(f)
 		for p in rpaths1:
 			if p not in rpaths2:
-				rpaths_added_or_deleted.append(p)
+				h = next((obj for obj in fileHashes1 if obj.relative == p), None)
+				fileHashes_deleted.append(h)
 		
 		sorted_merged = sorted(merged, key=str.casefold)
 
@@ -109,24 +111,24 @@ if __name__ == '__main__':
 			# Detect files that are identical, but have merely been renamed or moved
 			if entry2 == None or entry1 == None:
 				this_entry = entry2 if entry2 else entry1
-				this_hlist = fileHashes2 if entry2 else fileHashes1
-				other_hlist = fileHashes1 if entry2 else fileHashes2
-				other_hlist_matches: list[str] = []
+				this_hlist = fileHashes_added if entry2 else fileHashes_deleted
+				other_hlist = fileHashes_deleted if entry2 else fileHashes_added
+				other_hlist_matches: list[FileHash] = []
 				for h in other_hlist:
-					if (h.relative not in renamed) and (h.relative in rpaths_added_or_deleted) and (h.s256hash == this_entry.s256hash):
-						other_hlist_matches.append(h.relative)
+					if (h.relative not in renamed) and (h.size == this_entry.size) and (h.s256hash == this_entry.s256hash):
+						other_hlist_matches.append(h)
 				if len(other_hlist_matches) > 0:
 					# Check for any other matching hashes in this list, too
-					this_hlist_matches: list[str] = []
+					this_hlist_matches: list[FileHash] = []
 					for h in this_hlist:
-						if (h.relative not in renamed) and (h.relative in rpaths_added_or_deleted) and (h.s256hash == this_entry.s256hash):
+						if (h.relative not in renamed) and (h.size == this_entry.size) and (h.s256hash == this_entry.s256hash):
 							this_hlist_matches.append(h.relative)
 					if len(this_hlist_matches) == 1 and len(other_hlist_matches) == 1:
 						# 1:1 match, simple and easy
 						if entry2:
-							entry1 = next((obj for obj in fileHashes1 if obj.relative == other_hlist_matches[0]), None)
+							entry1 = other_hlist_matches[0]
 						else:
-							entry2 = next((obj for obj in fileHashes2 if obj.relative == other_hlist_matches[0]), None)
+							entry2 = other_hlist_matches[0]
 						renamed.append(entry1.relative)
 						renamed.append(entry2.relative)
 					else:
@@ -156,27 +158,27 @@ if __name__ == '__main__':
 							templist.append(0.0)
 						
 						viable_partner_i = -1
-						this_i = this_hlist_matches.index(this_entry.relative)
+						this_i = this_hlist_matches.index(this_entry)
 						a = len(this_hlist_matches)
 						b = len(other_hlist_matches)
 						while a > 0 and b > 0:
 							# Find the match which this_entry is closest to...
 							for i2, p2 in enumerate(other_hlist_matches):
 								if scores_already_calcd[this_i][i2] == False:
-									scores[this_i][i2] = SequenceMatcher(None, this_entry.relative, p2).ratio()
+									scores[this_i][i2] = SequenceMatcher(None, this_entry.relative, p2.relative).ratio()
 									scores_already_calcd[this_i][i2] = True
 								elif i2 in other_hlist_taken:
 									
 									scores[this_i][i2] = 0.0
 							next_highscore_i = scores[this_i].index(max(scores[this_i]))
 							
-							# and which isn't a closer match to another entry in this_hlist_matches.
+							# ... and which isn't a closer match to another entry in this_hlist_matches.
 							i2 = next_highscore_i
 							p2 = other_hlist_matches[i2]
 							for i, p in enumerate(this_hlist_matches):
 								if scores_already_calcd[i][i2] == False:
 									# TODO: Maybe skew to favor similar filename over similar subfolder?
-									scores[i][i2] = SequenceMatcher(None, p, p2).ratio()
+									scores[i][i2] = SequenceMatcher(None, p.relative, p2.relative).ratio()
 									scores_already_calcd[i][i2] = True
 								elif i in this_hlist_taken:
 									scores[i][i2] = 0.0
@@ -194,9 +196,9 @@ if __name__ == '__main__':
 						if viable_partner_i != -1:
 							# Found most viable partner
 							if entry2:
-								entry1 = next((obj for obj in fileHashes1 if obj.relative == other_hlist_matches[viable_partner_i]), None)
+								entry1 = other_hlist_matches[viable_partner_i]
 							else:
-								entry2 = next((obj for obj in fileHashes2 if obj.relative == other_hlist_matches[viable_partner_i]), None)
+								entry2 = other_hlist_matches[viable_partner_i]
 							renamed.append(entry1.relative)
 							renamed.append(entry2.relative)
 						else:
