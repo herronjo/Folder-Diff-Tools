@@ -122,7 +122,7 @@ if __name__ == '__main__':
 					this_hlist_matches: list[FileHash] = []
 					for h in this_hlist:
 						if (h.relative not in renamed) and (h.size == this_entry.size) and (h.s256hash == this_entry.s256hash):
-							this_hlist_matches.append(h.relative)
+							this_hlist_matches.append(h)
 					if len(this_hlist_matches) == 1 and len(other_hlist_matches) == 1:
 						# 1:1 match, simple and easy
 						if entry2:
