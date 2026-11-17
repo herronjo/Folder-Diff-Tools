@@ -54,6 +54,7 @@ if __name__ == '__main__':
 	if Path(sys.argv[3]).is_dir():
 		print(f'Error: "{sys.argv[3]}" is a directory.')
 		quit()
+	Path(sys.argv[3]).parent.mkdir(exist_ok=True, parents=True)
 	with open(sys.argv[3], 'w', encoding='utf-8') as fd:
 		fd.write(f'Comparing {sys.argv[1]} to {sys.argv[2]}\n')
 		fd.write(f'Original Filename\tOriginal Size (bytes)\tOriginal Hash\tUpdated Filename\tUpdated Size (bytes)\tUpdated Hash\tStatus\n')

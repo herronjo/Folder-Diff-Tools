@@ -46,6 +46,7 @@ if __name__ == '__main__':
 	if Path(sys.argv[2]).is_dir():
 		print(f'Error: "{sys.argv[2]}" is a directory.')
 		quit()
+	Path(sys.argv[2]).parent.mkdir(exist_ok=True, parents=True)
 	# Test that the output file can actually be written.
 	f_test = open(sys.argv[2], 'w', encoding='utf-8')
 	f_test.close()
